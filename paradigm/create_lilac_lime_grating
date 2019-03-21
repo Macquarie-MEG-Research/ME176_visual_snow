@@ -1,0 +1,40 @@
+import numpy as np
+
+import psychopy.visual
+import psychopy.filters
+import psychopy.event
+
+win = psychopy.visual.Window(
+    size=[400, 400],
+    fullscr=False,
+    units="pix"
+)
+
+grating_res = 256
+
+grating = psychopy.filters.makeGrating(res=grating_res, cycles=2.0,color=[0.2,0.2,0.2])
+
+# initialise a 'black' texture
+blue_grating = np.ones((grating_res, grating_res, 3)) * -1.0
+
+
+# replace the blue channel with the grating
+blue_grating[..., -2] = grating
+print(blue_grating)
+
+
+
+stim = psychopy.visual.GratingStim(
+    win=win,
+    tex=blue_grating,
+    mask="circle",
+    size=(grating_res, grating_res)
+)
+
+stim.draw()
+
+win.flip()
+
+psychopy.event.waitKeys()
+
+win.close()
