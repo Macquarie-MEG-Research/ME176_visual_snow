@@ -74,7 +74,7 @@ data_clean_150 = ft_resampledata(cfg,data);
 
 %% Select 'trials' timelocked to the grating onset
 disp('Selecting Grating Trials');
-grating_trials = (find(data.trialinfo == 179));
+grating_trials = (find(data.trialinfo == 181));
 cfg = [];
 cfg.trials = grating_trials;
 grating = ft_redefinetrial(cfg,data_clean_150); %redefines the data
@@ -97,14 +97,14 @@ save grating grating
 clear grating_trials
 
 disp('Selecting Alien Trials');
-alien_ast_trials = (find(data.trialinfo == 181));
+alien_ast_trials = (find(data.trialinfo == 183));
 
 cfg = [];
 cfg.trials = alien_ast_trials;
 alien_ast = ft_redefinetrial(cfg,data_clean_150); %redefines the data
 
 % Reject the same trials as for the grating
-alien_ast.trialnum = [1:1:120]';
+alien_ast.trialnum = [1:1:80]';
 
 cfg = [];
 cfg.trials = grating.trialnum;

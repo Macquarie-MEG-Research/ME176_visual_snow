@@ -29,7 +29,7 @@ datapost = ft_redefinetrial(cfg, data_filtered);
 
 %% Create leadfields in subject{i}'s brain warped to MNI space
 %Load template sourcemodel
-load('/Users/44737483/Documents/fieldtrip-20170501/template/sourcemodel/standard_sourcemodel3d8mm.mat');
+load('/Users/44737483/Documents/fieldtrip-20181213/template/sourcemodel/standard_sourcemodel3d8mm.mat');
 template_grid = sourcemodel;
 template_grid = ft_convert_units(template_grid,'mm');
 clear sourcemodel;
@@ -101,7 +101,7 @@ cfg.parameter = 'avg.pow';
 cfg.operation = '((x1-x2)./x2)*100';
 sourceR=ft_math(cfg,sourcepstS1,sourcepreS1);
 
-mri = ft_read_mri('/Users/44737483/Documents/fieldtrip-20170501/template/anatomy/single_subj_T1.nii');
+mri = ft_read_mri('/Users/44737483/Documents/fieldtrip-20181213/template/anatomy/single_subj_T1.nii');
 
 % Interpolate onto SPM brain
 cfg              = [];
@@ -149,7 +149,7 @@ print('vis_gamma_3','-dpng','-r300');
 %% Do VE analysis
 disp('Creating ROIs in L_Calcarine and R_Calcarine');
 
-atlas = ft_read_atlas('/Users/44737483/Documents/fieldtrip-20170501/template/atlas/aal/ROI_MNI_V4.nii');
+atlas = ft_read_atlas('/Users/44737483/Documents/fieldtrip-20181213/template/atlas/aal/ROI_MNI_V4.nii');
 atlas = ft_convert_units(atlas,'mm');
 
 % Interpolate the atlas onto 10mm grid

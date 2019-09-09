@@ -12,7 +12,7 @@ win = psychopy.visual.Window(
 
 grating_res = 256
 
-grating = psychopy.filters.makeGrating(res=grating_res, cycles=2.0,color=[0.2,0.2,0.2])
+grating = psychopy.filters.makeGrating(res=grating_res, cycles=2.0)
 
 # initialise a 'black' texture
 blue_grating = np.ones((grating_res, grating_res, 3)) * -1.0
