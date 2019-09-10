@@ -4,42 +4,218 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-addpath('/Users/44737483/Documents/ME176_visual_snow/analysis');
-addpath(genpath('/Users/44737483/Documents/scripts_mcq/MQ_MEG_Scripts'));
-addpath(genpath('/Users/44737483/Documents/scripts_mcq/MEMES'));
+%% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 1. Set up paths
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Preprocessing
-dir_name = '/Users/44737483/Documents/ME176_visual_snow/raw_data/3376'
-confile = [dir_name '/3376_HJ_ME174_2019_06_07_aliens.con'];
-elpfile = [dir_name '/3376_HJ_ME174_2019_06_07.elp'];
-hspfile = [dir_name '/3376_HJ_ME174_2019_06_07.hsp'];
-confile = [dir_name '/3376_HJ_ME174_2019_06_07_aliens.con'];
-mrkfile = [dir_name '/3376_HJ_ME174_2019_06_07_aliens_PRE.mrk'];
+script_path = ['/Users/rseymoue/Documents/GitHub/ME176_visual_snow'];
 
-bad_coil = '';
+% Path to the raw data
+data_path   = ['/Volumes/Robert T5/BIDS/BIDS-2019-19/ME176/'];
+
+% Path to where the data should be saved
+save_path   = ['/Volumes/Robert T5/ME176_data_preprocessed/'];
+
+% Path to MQ_MEG_Scripts
+% Download from https://github.com/Macquarie-MEG-Research/MQ_MEG_Scripts
+path_to_MQ_MEG_Scripts = ['/Users/rseymoue/Documents/GitHub/MQ_MEG_Scripts/'];
+
+% Path to MEMES
+% Download from https://github.com/Macquarie-MEG-Research/MEMES
+path_to_MEMES = ['/Users/rseymoue/Documents/GitHub/MEMES/'];
+
+% Path to MRI L:ibrary for MEMES
+path_to_MRI_library = '/Volumes/Robert T5/new_HCP_library_for_MEMES/';
+    
 
 %%
-preprocessing_ME176
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 2. Add MQ_MEG_Scripts and MEMES to path
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Sensory Realign
+disp('Adding MQ_MEG_Scripts and MEMES to your MATLAB path');
+warning(['Please note that MQ_MEG_Scripts and MEMES are designed for'...
+    ' MATLAB 2016b or later and have been tested using Fieldtrip'...
+    ' version 20181213']);
+addpath(genpath(path_to_MQ_MEG_Scripts));
+addpath(genpath(path_to_MEMES));
+addpath(genpath(script_path));
 
-[grad_trans] = mq_realign_sens(dir_name, elpfile, hspfile, confile,...
-    mrkfile, bad_coil,'rot3dfit');
+%% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 3. Load Subject List
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+subject = {'3317','3321','3323','3324','3326','3331','3332',...
+    '3350','3354','3376','3492'};
 
-%% Downsample Headshape
-headshape_downsampled = downsample_headshape(hspfile, 'yes');
-save headshape_downsampled headshape_downsampled
+% Load subject information from excel file
+subj_info = csv2struct([data_path 'subject_info_ME176.xlsx']);
+
+%% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 4. Make a subject specific results folder for saving
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+disp('Making subject specific folders for saving');
+for sub = 1:length(subject)
+    % Get the path to the saving directory
+    dir_name = [save_path subject{sub}];
+    % Make the directory!
+    mkdir(dir_name);
+end
+
+
+%% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 5. Calculate Saturations, downsample headshape, realign sensors
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+disp('Downsamping headshape & realigning sensors');
+
+% For every subject...
+for sub = 1:length(act_subject)
+    
+    close all
+    
+    confile = [data_path 'sub-' subject{sub} '/ses-1/meg/sub-' subject{sub}...
+        '_ses-1_task-alien_run-1_meg.con'];
+    
+    mrkfile = [data_path 'sub-' subject{sub}...
+        '/ses-1/meg/sub-' subject{sub} '_ses-1_task-alien_run-1_markers.mrk'];
+    
+    elpfile = dir([data_path 'sub-' subject{sub}...
+        '/ses-1/extras/*.elp']);
+    elpfile = [elpfile.folder '/' elpfile.name];
+    
+    hspfile = dir([data_path 'sub-' subject{sub}...
+        '/ses-1/extras/*.hsp']);
+    hspfile = [hspfile.folder '/' hspfile.name];
+
+    % Get the path to the saving directory
+    dir_name = [save_path subject{sub}];
+    cd(dir_name);
+    
+    %%%%%%%%%%%%%%%%%%%%%%%
+    % Check for saturations
+    %%%%%%%%%%%%%%%%%%%%%%%
+    [sat] = mq_detect_saturations(dir_name,confile)
+    save sat sat
+    
+    %%%%%%%%%%%%%%%%%%%%%%
+    % Downsample headshape
+    %%%%%%%%%%%%%%%%%%%%%%
+    headshape_downsampled = downsample_headshape(hspfile,'no',4);
+    % Save
+    cd(dir_name); 
+    disp('Saving headshape_downsampled');
+    save headshape_downsampled headshape_downsampled;
+
+    %%%%%%%%%%%%%%%%%
+    % Realign Sensors
+    %%%%%%%%%%%%%%%%%
+    [grad_trans] = mq_realign_sens(dir_name,elpfile,hspfile,...
+        confile,mrkfile,'','rot3dfit');
+    
+    print('grad_trans','-dpng','-r200');
+    
+    %clear headshape_downsampled grad_trans 
+    %close all
+end
+        
+disp('Performing MEMES');
+
+% For every subject...
+for sub = 1:length(subject)
+    % Get the path to the saving directory
+    dir_name = [save_path subject{sub}];
+    cd(dir_name)
+    
+    % Load grad_trans and headshape_downsampled
+    disp('Loading grad_trans and headshape_downsampled');
+    
+    load('grad_trans');
+    load('headshape_downsampled');
+    
+    MEMES3(dir_name,grad_trans,headshape_downsampled,...
+        path_to_MRI_library,'best',1);
+    
+    close all
+end
+
+
+%% Preprocessing
+
+for sub = 1:length(subject)
+   confile = [data_path 'sub-' subject{sub} '/ses-1/meg/sub-' subject{sub}...
+        '_ses-1_task-alien_run-1_meg.con'];
+    
+        % Get the path to the saving directory
+    dir_name = [save_path subject{sub}];
+    cd(dir_name);
+    
+    preprocessing_ME176(dir_name, confile);
+    
+    close all force
+end
+
+%% Remove saturated data
+for sub = 1:length(subject)
+    fprintf('Subject %s - processing\n',subject{sub});
+    dir_name = [save_path subject{sub}];
+    cd(dir_name);
+    
+    bad_sens = mq_find_subj(subj_info,subject{sub},'sat_sens_to_remove');
+    
+    if ~isnan(bad_sens)
+        
+        load('grating.mat');
+        load('sat.mat');
+        
+        bad_sens_cell = strsplit(bad_sens,', ');
+        
+        [grating] = mq_remove_sat(grating,sat,bad_sens_cell,'yes');
+        
+        disp('Saving data');
+        save grating grating
+    end
+    
+end
+
 
 %% TFR
-sensor_level_tfr_ME176(dir_name)
-
-%% MEMES
-
-path_to_MRI_library = ['/Users/44737483/Documents/scripts_mcq/'...
-    'new_HCP_library_for_MEMES/'];
-
-MEMES3(dir_name,grad_trans,headshape_downsampled,...
-    path_to_MRI_library,'average',[0.98:0.01:1.02])
+for sub = 1:length(subject)
+    dir_name = [save_path subject{sub}];
+    cd(dir_name);
+    sensor_level_tfr_ME176(dir_name);
+    close all force
+end
 
 %% Gamma Source Analysis
-source_localisation_gamma_ME176(dir_name)
+
+disp('Performing Single Subject Source Analysis');
+
+% Load template sourcemodel (8mm)
+load(['/Users/rseymoue/Documents/GitHub/fieldtrip/template/'...
+    'sourcemodel/standard_sourcemodel3d8mm.mat']);
+template_grid = sourcemodel;
+template_grid = ft_convert_units(template_grid,'mm');
+clear sourcemodel;
+
+% Load the SPM T1 brain
+mri = ft_read_mri(['/Users/rseymoue/Documents/GitHub/fieldtrip/'...
+    'template/anatomy/single_subj_T1.nii']);
+
+atlas = ft_read_atlas(['/Users/rseymoue/Documents/GitHub/fieldtrip/'...
+    'template/atlas/aal/ROI_MNI_V4.nii']);
+atlas = ft_convert_units(atlas,'mm');
+
+for sub = 1:length(subject)
+    dir_name = [save_path subject{sub}];
+    cd(dir_name);
+    source_localisation_gamma_ME176(dir_name,mri,template_grid,atlas);
+end
+    
+    
+    
+    
+    

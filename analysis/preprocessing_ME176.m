@@ -79,9 +79,12 @@ cfg = [];
 cfg.trials = grating_trials;
 grating = ft_redefinetrial(cfg,data_clean_150); %redefines the data
 
-grating.trialnum = [1:1:120]';
+grating.trialnum = [1:1:length(grating_trials)]';
 
-diary off
+if length(grating_trials) ~= 120
+    ft_warning('Incorrect number of grating trials?');
+end
+
 cfg = [];
 cfg.viewmode = 'vertical';
 ft_databrowser(cfg,grating)
@@ -99,12 +102,16 @@ clear grating_trials
 disp('Selecting Alien Trials');
 alien_ast_trials = (find(data.trialinfo == 183));
 
+if length(alien_ast_trials) ~= 120
+    ft_warning('Incorrect number of grating trials?');
+end
+
 cfg = [];
 cfg.trials = alien_ast_trials;
 alien_ast = ft_redefinetrial(cfg,data_clean_150); %redefines the data
 
 % Reject the same trials as for the grating
-alien_ast.trialnum = [1:1:80]';
+alien_ast.trialnum = [1:1:length(alien_ast_trials)]';
 
 cfg = [];
 cfg.trials = grating.trialnum;
