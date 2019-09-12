@@ -65,6 +65,7 @@ cfg.method='lcmv';
 cfg.grid=lf;
 cfg.headmodel=headmodel;
 cfg.lcmv.keepfilter='yes';
+cfg.lcmv.fixedori = 'yes';
 cfg.grad = grad_trans;
 sourceavg=ft_sourceanalysis(cfg, avg);
 
@@ -107,7 +108,7 @@ cfg.funparameter = 'pow';
 ft_sourceplot(cfg,sourceI);
 ft_hastoolbox('brewermap', 1);         % ensure this toolbox is on the path
 colormap(flipud(brewermap(64,'RdBu'))) % change the colormap
-saveas(gcf,'sourceI.png'); drawnow;
+saveas(gcf,'sourceI_new3.png'); drawnow;
 
 disp('Producing 3D Plot');
 cfg = [];
@@ -136,6 +137,52 @@ print('vis_gamma_2','-dpng','-r300');
 view([60 0]);
 print('vis_gamma_3','-dpng','-r300');
 
+%% Create VE from max point
+
+% Find filter from max point
+filter = sourceavg.avg.filter{find(sourceR.pow == max(sourceR.pow)),1};
+
+VE = [];
+VE.label = {'max'};
+VE.trialinfo = grating.trialinfo;
+for subs=1:(length(grating.trialinfo))
+    % note that this is the non-filtered "raw" data
+    VE.time{subs}       = grating.time{subs};
+    VE.trial{subs}(1,:) = filter(1,:)*grating.trial{subs}(:,:);
+end
+
+% Compute TFR using multitapers
+cfg = [];
+cfg.method = 'mtmconvol';
+cfg.output = 'pow';
+cfg.pad = 'nextpow2'
+cfg.foi = 1:1:100;
+cfg.toi = -2.0:0.02:3.0;
+cfg.t_ftimwin    = ones(length(cfg.foi),1).*0.5;
+cfg.tapsmofrq  = ones(length(cfg.foi),1).*8;
+
+multitaper = ft_freqanalysis(cfg, VE);
+
+% Plot
+cfg                 = [];
+cfg.ylim            = [30 100];
+cfg.xlim            = [-0.5 1.5];
+cfg.baseline        = [-1.5 -0.3];
+cfg.baselinetype    = 'normchange';
+cfg.zlim = 'maxabs';
+figure; ft_singleplotTFR(cfg, multitaper);
+title('MAX','Interpreter','none');
+ft_hastoolbox('brewermap', 1);         % ensure this toolbox is on the path
+colormap(flipud(brewermap(64,'RdBu'))) % change the colormap
+xlabel('Time (s)'); ylabel('Frequency (Hz)');
+set(gca,'FontSize',20); drawnow;
+print('VE_TFR_MAX','-dpng','-r200');
+
+% Save to file with label and subject information
+save('VE_max','VE');
+
+clear VE
+
 %% Do VE analysis
 disp('Creating ROIs in L_Calcarine and R_Calcarine');
 
@@ -148,56 +195,56 @@ sourcemodel2 = ft_sourceinterpolate(cfg, atlas, template_grid);
 labels = {'Calcarine_L','Calcarine_R'};
 
 for lab = 1:length(labels)
-    % Find atlas points
-    atlas_points = find(sourcemodel2.tissue==...
-        find(contains(sourcemodel2.tissuelabel,labels{lab})));
-    
-    % Concatenate spatial filter
-    F    = cat(1,sourceavg.avg.filter{atlas_points});
-    
-    % Do SVD
-    [u,s,v] = svd(F*avg.cov*F');
-    filter = u'*F;
-    
-    % Create VE
-    VE = [];
-    VE.label = {labels{lab}};
-    VE.trialinfo = grating.trialinfo;
-    for subs=1:(length(grating.trialinfo))
-        % note that this is the non-filtered "raw" data
-        VE.time{subs}       = grating.time{subs};
-        VE.trial{subs}(1,:) = filter(1,:)*grating.trial{subs}(:,:);
-    end
-    
-    % Save to file with label and subject information
-    save(sprintf('VE_%s',labels{lab}),'VE');
-    
-    % Compute TFR using multitapers
-    cfg = [];
-    cfg.method = 'mtmconvol';
-    cfg.output = 'pow';
-    cfg.pad = 'nextpow2'
-    cfg.foi = 1:1:100;
-    cfg.toi = -2.0:0.02:3.0;
-    cfg.t_ftimwin    = ones(length(cfg.foi),1).*0.5;
-    cfg.tapsmofrq  = ones(length(cfg.foi),1).*8;
-    
-    multitaper = ft_freqanalysis(cfg, VE);
-    
-    % Plot
-    cfg                 = [];
-    cfg.ylim            = [30 100];
-    cfg.xlim            = [-0.5 1.5];
-    cfg.baseline        = [-1.5 -0.3];
-    cfg.baselinetype    = 'relative';
-    %cfg.zlim = 'maxabs';
-    figure; ft_singleplotTFR(cfg, multitaper);
-    title(labels{lab},'Interpreter','none');
-    ft_hastoolbox('brewermap', 1);         % ensure this toolbox is on the path
-    colormap(flipud(brewermap(64,'RdBu'))) % change the colormap
-    xlabel('Time (s)'); ylabel('Frequency (Hz)');
-    set(gca,'FontSize',20); drawnow;
-    print(sprintf('VE_TFR_%s',labels{lab}),'-dpng','-r200');
+%     % Find atlas points
+%     atlas_points = find(sourcemodel2.tissue==...
+%         find(contains(sourcemodel2.tissuelabel,labels{lab})));
+%     
+%     % Concatenate spatial filter
+%     F    = cat(1,sourceavg.avg.filter{atlas_points});
+%     
+%     % Do SVD
+%     [u,s,v] = svd(F*avg.cov*F');
+%     filter = u'*F;
+%     
+%     % Create VE
+%     VE = [];
+%     VE.label = {labels{lab}};
+%     VE.trialinfo = grating.trialinfo;
+%     for subs=1:(length(grating.trialinfo))
+%         % note that this is the non-filtered "raw" data
+%         VE.time{subs}       = grating.time{subs};
+%         VE.trial{subs}(1,:) = filter(1,:)*grating.trial{subs}(:,:);
+%     end
+%     
+%     % Save to file with label and subject information
+%     save(sprintf('VE_%s',labels{lab}),'VE');
+%     
+%     % Compute TFR using multitapers
+%     cfg = [];
+%     cfg.method = 'mtmconvol';
+%     cfg.output = 'pow';
+%     cfg.pad = 'nextpow2'
+%     cfg.foi = 1:1:100;
+%     cfg.toi = -2.0:0.02:3.0;
+%     cfg.t_ftimwin    = ones(length(cfg.foi),1).*0.5;
+%     cfg.tapsmofrq  = ones(length(cfg.foi),1).*8;
+%     
+%     multitaper = ft_freqanalysis(cfg, VE);
+%     
+%     % Plot
+%     cfg                 = [];
+%     cfg.ylim            = [30 100];
+%     cfg.xlim            = [-0.5 1.5];
+%     cfg.baseline        = [-1.5 -0.3];
+%     cfg.baselinetype    = 'relative';
+%     %cfg.zlim = 'maxabs';
+%     figure; ft_singleplotTFR(cfg, multitaper);
+%     title(labels{lab},'Interpreter','none');
+%     ft_hastoolbox('brewermap', 1);         % ensure this toolbox is on the path
+%     colormap(flipud(brewermap(64,'RdBu'))) % change the colormap
+%     xlabel('Time (s)'); ylabel('Frequency (Hz)');
+%     set(gca,'FontSize',20); drawnow;
+%     print(sprintf('VE_TFR_%s',labels{lab}),'-dpng','-r200');
 end
 
 clear data_filtered sourceavg 
