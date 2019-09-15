@@ -17,6 +17,9 @@ data_path   = ['/Volumes/Robert T5/BIDS/BIDS-2019-19/ME176/'];
 % Path to where the data should be saved
 save_path   = ['/Volumes/Robert T5/ME176_data_preprocessed/'];
 
+% Path to where you want to save the group-level results
+group_dir = '/Users/rseymoue/Dropbox/Research/Projects/visual_snow2019/';
+
 % Path to MQ_MEG_Scripts
 % Download from https://github.com/Macquarie-MEG-Research/MQ_MEG_Scripts
 path_to_MQ_MEG_Scripts = ['/Users/rseymoue/Documents/GitHub/MQ_MEG_Scripts/'];
@@ -28,7 +31,6 @@ path_to_MEMES = ['/Users/rseymoue/Documents/GitHub/MEMES/'];
 % Path to MRI L:ibrary for MEMES
 path_to_MRI_library = '/Volumes/Robert T5/new_HCP_library_for_MEMES/';
     
-
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 2. Add MQ_MEG_Scripts and MEMES to path
@@ -47,7 +49,7 @@ addpath(genpath(script_path));
 % 3. Load Subject List
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 subject = {'3317','3321','3323','3324','3326','3331','3332',...
-    '3350','3354','3376','3492'};
+    '3350','3354','3376','3492','3120'};
 
 % Load subject information from excel file
 subj_info = csv2struct([data_path 'subject_info_ME176.xlsx']);
@@ -73,7 +75,7 @@ end
 disp('Downsamping headshape & realigning sensors');
 
 % For every subject...
-for sub = 1:length(act_subject)
+for sub = 1:length(subject)
     
     close all
     
@@ -104,7 +106,11 @@ for sub = 1:length(act_subject)
     %%%%%%%%%%%%%%%%%%%%%%
     % Downsample headshape
     %%%%%%%%%%%%%%%%%%%%%%
-    headshape_downsampled = downsample_headshape(hspfile,'no',4);
+    headshape_downsampled = downsample_headshape(hspfile,'yes',2);
+    %headshape_downsampled = add_facial_info(headshape_downsampled);
+    
+    figure; ft_plot_headshape(headshape_downsampled);
+    
     % Save
     cd(dir_name); 
     disp('Saving headshape_downsampled');
@@ -121,7 +127,12 @@ for sub = 1:length(act_subject)
     %clear headshape_downsampled grad_trans 
     %close all
 end
-        
+
+
+%% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 6. MEMES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 disp('Performing MEMES');
 
 % For every subject...
@@ -137,13 +148,16 @@ for sub = 1:length(subject)
     load('headshape_downsampled');
     
     MEMES3(dir_name,grad_trans,headshape_downsampled,...
-        path_to_MRI_library,'best',1);
+        path_to_MRI_library,'average',1);
     
     close all
 end
 
 
-%% Preprocessing
+%% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 7. Preprocessing
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 for sub = 1:length(subject)
    confile = [data_path 'sub-' subject{sub} '/ses-1/meg/sub-' subject{sub}...
@@ -158,6 +172,10 @@ for sub = 1:length(subject)
     close all force
 end
 
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 8. Remove Saturated Data
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Remove saturated data
 for sub = 1:length(subject)
     fprintf('Subject %s - processing\n',subject{sub});
@@ -181,8 +199,11 @@ for sub = 1:length(subject)
     
 end
 
+%% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 9. Sensor-Level TFR
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% TFR
 for sub = 1:length(subject)
     dir_name = [save_path subject{sub}];
     cd(dir_name);
@@ -190,8 +211,10 @@ for sub = 1:length(subject)
     close all force
 end
 
-%% Gamma Source Analysis
-
+%% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 10. Whole-Brain Source Analysis (LCMV)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 disp('Performing Single Subject Source Analysis');
 
 % Load template sourcemodel (8mm)
@@ -214,8 +237,12 @@ for sub = 1:length(subject)
     cd(dir_name);
     source_localisation_gamma_ME176(dir_name,mri,template_grid,atlas);
 end
-    
-    
-    
+
+%% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 11. Plot Grand Average Results from Virtual Electrode
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+plot_VE_gamma(subject,save_path,group_dir,group)   
     
     
