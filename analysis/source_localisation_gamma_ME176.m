@@ -29,6 +29,7 @@ datapost = ft_redefinetrial(cfg, data_filtered);
 
 %% Create leadfield
 cfg = [];
+cfg.channel = grating.label;
 cfg.grid = sourcemodel3d;
 cfg.headmodel = headmodel;
 cfg.grad = grad_trans;
@@ -44,12 +45,14 @@ ft_plot_sens(grad_trans, 'style', 'r*')
 % Here we are keeping all parts of the trial to compute the
 % covariance matrix --> common filter
 cfg = [];
+cfg.channel = grating.label;
 cfg.covariance = 'yes';
 cfg.covariancewindow = [-1.5 1.5]
 avg = ft_timelockanalysis(cfg,data_filtered);
 
 % Time lock analysis for datapre and datapost period
 cfg = [];
+cfg.channel = grating.label;
 cfg.covariance='yes';
 avgpre = ft_timelockanalysis(cfg,datapre);
 avgpst = ft_timelockanalysis(cfg,datapost);
@@ -61,6 +64,7 @@ plot(avg.time,avg.avg)
 %% Do ya beamforming
 % Source reconstruction for the whole trial
 cfg=[];
+cfg.channel = grating.label;
 cfg.method='lcmv';
 cfg.grid=lf;
 cfg.headmodel=headmodel;
@@ -72,6 +76,7 @@ sourceavg=ft_sourceanalysis(cfg, avg);
 % Now do beamforming for the two time points separately using the same spatial
 % filter computed from the whole trial
 cfg = [];
+cfg.channel = grating.label;
 cfg.method='lcmv';
 cfg.grid=lf;
 cfg.grid.filter=sourceavg.avg.filter; %uses the grid from the whole trial average
