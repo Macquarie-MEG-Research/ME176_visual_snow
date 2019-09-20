@@ -19,6 +19,7 @@ function plot_VE_gamma(subject,save_path,group_dir,group)
 
 
 multitaper_all = [];
+multitaper_all_4= [];
 TFR_hann_all = [];
 
 for sub = 1:length(subject)
@@ -35,9 +36,11 @@ for sub = 1:length(subject)
     cfg.foi = 1:1:100;
     cfg.toi = -2.0:0.02:3.0;
     cfg.t_ftimwin    = ones(length(cfg.foi),1).*0.5;
-    cfg.tapsmofrq  = ones(length(cfg.foi),1).*4;
-    
+    cfg.tapsmofrq  = ones(length(cfg.foi),1).*8;
     multitaper_all{sub} = ft_freqanalysis(cfg, VE);
+    cfg.tapsmofrq  = ones(length(cfg.foi),1).*4;
+    multitaper_all_4{sub} = ft_freqanalysis(cfg, VE);
+    
     
     cfg              = [];
     cfg.output       = 'pow';
@@ -57,7 +60,6 @@ cfg.parameter = 'powspctrm';
 multitaper_grand_avg = ft_freqgrandaverage(cfg,multitaper_all{:});
 hann_grand_avg = ft_freqgrandaverage(cfg,TFR_hann_all{:});
 
-
 cfg                 = [];
 cfg.ylim            = [30 100];
 cfg.xlim            = [-0.5 1.5];
@@ -73,7 +75,6 @@ set(gca,'FontSize',20); drawnow;
 
 cd(group_dir);
 print(['VE_TFR_MAX_grandaverage_' group],'-dpng','-r300');
-
 
 cfg                 = [];
 cfg.ylim            = [1 30];
@@ -95,13 +96,14 @@ perc_change = [];
 
 for sub = 1:length(subject)
     
-    baseline_pow = squeeze(multitaper_all{1,sub}.powspctrm);
+    baseline_pow = squeeze(multitaper_all_4{1,sub}.powspctrm);
     baseline_pow = mean(baseline_pow(:,(26:86)),2);
     
-    baseline_grating = squeeze(multitaper_all{1,sub}.powspctrm);
+    baseline_grating = squeeze(multitaper_all_4{1,sub}.powspctrm);
     baseline_grating = mean(baseline_grating(:,(116:176)),2);
     
-    perc_change(sub,:) = ((baseline_grating-baseline_pow)./baseline_pow).*100;
+    perc_change(sub,:) = ((baseline_grating-baseline_pow)...
+        ./baseline_pow).*100;
 end
     
     
