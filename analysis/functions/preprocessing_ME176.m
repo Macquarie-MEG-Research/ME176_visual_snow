@@ -1,10 +1,25 @@
-function preprocessing_ME176(dir_name, confile)
+function preprocessing_ME176(dir_name, confile,subject,subj_info)
 
 disp('Running Preprocessing Script for Project ME176 - Alien Task');
 
 %% CD to correct directory
 disp('Going to the directory specified by dir_name')
 cd(dir_name);
+
+if strcmp(mq_find_subj(subj_info,subject,'tSSS'),'yes')
+    disp('Loading tSSS .fif file');
+    confile_tsss = [confile(1:end-4) '_raw_tsss.fif'];
+    
+    cfg = [];
+    cfg.headerfile = confile_tsss;
+    cfg.datafile = confile_tsss;
+    cfg.trialdef.triallength = Inf;
+    cfg.trialdef.ntrials = 1;
+    cfg = ft_definetrial(cfg)
+    
+    cfg.continuous = 'yes';
+    alldata_tsss = ft_preprocessing(cfg);
+end
 
 %% Epoching & Filtering
 % Epoch the whole dataset into one continous dataset and apply
@@ -18,6 +33,11 @@ cfg = ft_definetrial(cfg)
 
 cfg.continuous = 'yes';
 alldata = ft_preprocessing(cfg);
+
+% Replace data with tSSS data if specified
+if strcmp(mq_find_subj(subj_info,subject,'tSSS'),'yes')
+    alldata.trial{1,1}(1:160,:) = alldata_tsss.trial{1,1}(1:160,:);
+end
 
 cfg.continuous = 'yes';
 cfg.bpfilter = 'yes';
@@ -53,7 +73,7 @@ cfg.dataset                 = confile;
 cfg.continuous              = 'yes';
 cfg.trialdef.prestim = 2.0;         % pre-stimulus interval
 cfg.trialdef.poststim = 3.0;        % post-stimulus interval
-cfg.trialfun                = 'mytrialfun_new_alien';
+cfg.trialfun                = 'mytrialfun_rs_mq';
 data_raw 			    = ft_definetrial(cfg);
 
 % Redefines the filtered data

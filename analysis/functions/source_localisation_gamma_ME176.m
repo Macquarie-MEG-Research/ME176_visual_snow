@@ -91,8 +91,9 @@ sourcepstS1=ft_sourceanalysis(cfg, avgpst);
 sourcepreS1.pos=template_grid.pos; % right(?)
 sourcepstS1.pos=template_grid.pos; % right(?)
 
-% save sourcepreS1 sourcepreS1
-% save sourcepstS1 sourcepstS1
+disp('Saving Data');
+save sourcepreS1 sourcepreS1
+save sourcepstS1 sourcepstS1
 
 %Plot the difference - not necessary but useful for illustration purposes
 cfg = [];

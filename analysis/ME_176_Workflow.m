@@ -28,9 +28,12 @@ path_to_MQ_MEG_Scripts = ['/Users/rseymoue/Documents/GitHub/MQ_MEG_Scripts/'];
 % Download from https://github.com/Macquarie-MEG-Research/MEMES
 path_to_MEMES = ['/Users/rseymoue/Documents/GitHub/MEMES/'];
 
-% Path to MRI L:ibrary for MEMES
+% Path to MRI Library for MEMES
 path_to_MRI_library = '/Volumes/Robert T5/new_HCP_library_for_MEMES/';
     
+% Path to PACmeg
+path_to_PACmeg = '/Users/rseymoue/Documents/GitHub/PACmeg';
+
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 2. Add MQ_MEG_Scripts and MEMES to path
@@ -44,12 +47,25 @@ addpath(genpath(path_to_MQ_MEG_Scripts));
 addpath(genpath(path_to_MEMES));
 addpath(genpath(script_path));
 
+try
+    addpath(genpath(path_to_PACmeg));
+catch
+    disp('You do not have PACmeg');
+end
+
 %% 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 3. Load Subject List
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-subject = {'3317','3321','3323','3324','3326','3331','3332',...
-    '3350','3354','3376','3492','3120'};
+
+subject = {'3630','3633'};
+
+subject_VS = {'3120','3317','3321','3323','3324','3326','3350','3351',...
+    '3354','3376','3492','3567','3568','3569','3592','3593','3595','3605',...
+    '3606','3626'};
+
+subject_control = {'3565','3566','3588','3589','3610','3611','3627',...
+    '3630','3633'};
 
 % Load subject information from excel file
 subj_info = csv2struct([data_path 'subject_info_ME176.xlsx']);
@@ -65,7 +81,6 @@ for sub = 1:length(subject)
     % Make the directory!
     mkdir(dir_name);
 end
-
 
 %% 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -148,7 +163,7 @@ for sub = 1:length(subject)
     load('headshape_downsampled');
     
     MEMES3(dir_name,grad_trans,headshape_downsampled,...
-        path_to_MRI_library,'average',1);
+    path_to_MRI_library,'best',1,8,4)
     
     close all
 end
@@ -159,7 +174,7 @@ end
 % 7. Preprocessing
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-for sub = 1:length(subject)
+for sub = 1:2
    confile = [data_path 'sub-' subject{sub} '/ses-1/meg/sub-' subject{sub}...
         '_ses-1_task-alien_run-1_meg.con'];
     
@@ -167,7 +182,7 @@ for sub = 1:length(subject)
     dir_name = [save_path subject{sub}];
     cd(dir_name);
     
-    preprocessing_ME176(dir_name, confile);
+    preprocessing_ME176(dir_name, confile,subject{sub},subj_info);
     
     close all force
 end
@@ -199,17 +214,17 @@ for sub = 1:length(subject)
     
 end
 
-%% 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 9. Sensor-Level TFR
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-for sub = 1:length(subject)
-    dir_name = [save_path subject{sub}];
-    cd(dir_name);
-    sensor_level_tfr_ME176(dir_name);
-    close all force
-end
+% %% 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % 9. Sensor-Level TFR
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+% for sub = 1:length(subject)
+%     dir_name = [save_path subject{sub}];
+%     cd(dir_name);
+%     sensor_level_tfr_ME176(dir_name);
+%     close all force
+% end
 
 %% 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -232,17 +247,56 @@ atlas = ft_read_atlas(['/Users/rseymoue/Documents/GitHub/fieldtrip/'...
     'template/atlas/aal/ROI_MNI_V4.nii']);
 atlas = ft_convert_units(atlas,'mm');
 
-for sub = 1:length(subject)
-    dir_name = [save_path subject{sub}];
-    cd(dir_name);
+% Gamma
+for  sub = 1:length(subject)
+    dir_name = [save_path subject_control{sub}];
     source_localisation_gamma_ME176(dir_name,mri,template_grid,atlas);
+end
+
+% Alpha
+for sub = 1:length(subject)
+    dir_name = [save_path subject_control{sub}];
+    source_localisation_alpha_ME176(dir_name,mri,template_grid);
 end
 
 %% 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 11. Plot Grand Average Results from Virtual Electrode
+% 11. Plot Grand Average Whole-Brain Source Localisation Results
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-plot_VE_gamma(subject,save_path,group_dir,group)   
-    
-    
+% Gamma
+plot_source_grandavg(subject_control,save_path,mri,group_dir,'control');
+plot_source_grandavg(subject_VS,save_path,mri,group_dir,'VS');
+
+% Alpha
+plot_source_grandavg_alpha(subject_control,save_path,mri,group_dir,'control')
+plot_source_grandavg_alpha(subject_VS,save_path,mri,group_dir,'VS')
+
+clear source_pre_all source_pst_all
+
+%% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 12. Calculate V1 % Power Change / Peak Frequency and PLOT between
+% groups
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Gamma
+calc_pow_peak_freq_ME176(subject_VS,subject_control,...
+    save_path,group_dir);
+
+% Alpha
+calc_pow_peak_freq_alpha_ME176(subject_VS,subject_control,...
+    save_path,group_dir);
+
+%% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 13. Calculate & Plot Alpha-Gamma PAC
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+alpha_gamma_PAC(subject_control, save_path, group_dir,'control');
+alpha_gamma_PAC(subject_VS, save_path, group_dir,'VS');
+
+
+
+
+
