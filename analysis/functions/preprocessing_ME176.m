@@ -2,6 +2,12 @@ function preprocessing_ME176(dir_name, confile,subject,subj_info)
 
 disp('Running Preprocessing Script for Project ME176 - Alien Task');
 
+pd = mq_find_subj(subj_info,subject,'pd');
+
+if strcmp(pd,'photodetector')
+    pd_chan = mq_find_subj(subj_info,subject,'pd_chan');
+end
+
 %% CD to correct directory
 disp('Going to the directory specified by dir_name')
 cd(dir_name);
@@ -71,9 +77,18 @@ alldata = ft_selectdata(cfg,alldata);
 cfg = [];
 cfg.dataset                 = confile;
 cfg.continuous              = 'yes';
-cfg.trialdef.prestim = 2.0;         % pre-stimulus interval
+% If photodector present, use this to correct
+if strcmp(pd,'photodetector')
+    cfg.how_correct             = 'photodetector';
+    cfg.pd_chan                 = pd_chan;
+    % Otherwise use constant delay
+else
+    cfg.how_correct             = 'constant';
+end
+
+cfg.trialdef.prestim = 3.5;         % pre-stimulus interval
 cfg.trialdef.poststim = 3.0;        % post-stimulus interval
-cfg.trialfun                = 'mytrialfun_rs_mq';
+cfg.trialfun                = 'ME176_photodetector';
 data_raw 			    = ft_definetrial(cfg);
 
 % Redefines the filtered data
@@ -105,9 +120,9 @@ if length(grating_trials) ~= 120
     ft_warning('Incorrect number of grating trials?');
 end
 
-cfg = [];
-cfg.viewmode = 'vertical';
-ft_databrowser(cfg,grating)
+% cfg = [];
+% cfg.viewmode = 'vertical';
+% ft_databrowser(cfg,grating)
 
 % Load the summary again so you can manually remove any deviant trials
 cfg = [];

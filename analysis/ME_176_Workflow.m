@@ -168,13 +168,28 @@ for sub = 1:length(subject)
     close all
 end
 
+%% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% SPARE: Check which channel the photodetector was recorded on
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+for sub = 1:length(subject)
+   confile = [data_path 'sub-' subject{sub} '/ses-1/meg/sub-' subject{sub}...
+        '_ses-1_task-alien_run-1_meg.con'];
+    
+        % Get the path to the saving directory
+    dir_name = [save_path subject{sub}];
+    
+    check_pd(confile,dir_name,210);
+    
+end
 
 %% 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 7. Preprocessing
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-for sub = 1:2
+for sub = 1:length(subject)
    confile = [data_path 'sub-' subject{sub} '/ses-1/meg/sub-' subject{sub}...
         '_ses-1_task-alien_run-1_meg.con'];
     
@@ -248,8 +263,8 @@ atlas = ft_read_atlas(['/Users/rseymoue/Documents/GitHub/fieldtrip/'...
 atlas = ft_convert_units(atlas,'mm');
 
 % Gamma
-for  sub = 1:length(subject)
-    dir_name = [save_path subject_control{sub}];
+for  sub = 1:length(subject_VS)
+    dir_name = [save_path subject_VS{sub}];
     source_localisation_gamma_ME176(dir_name,mri,template_grid,atlas);
 end
 
