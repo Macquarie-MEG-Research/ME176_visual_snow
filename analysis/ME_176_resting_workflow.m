@@ -54,9 +54,9 @@ subject_VS = {'3120','3317','3321','3323','3324','3326','3350','3351',...
     '3606','3626'};
 
 subject_control = {'3565','3566','3588','3589','3610','3611','3627',...
-    '3630','3633'};
+    '3630','3633','3655','3658','3659'};
 
-subject = subject_VS;
+subject = {'3653','3655','3658','3659'};
 
 % Load subject information from excel file
 subj_info = csv2struct([data_path 'subject_info_ME176.xlsx']);
@@ -66,29 +66,26 @@ subj_info = csv2struct([data_path 'subject_info_ME176.xlsx']);
 % 4. Make a subject specific results folder for saving
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 disp('Making subject specific folders for saving');
-for sub = 1:length(subject_control)
+for sub = 1:length(subject)
     % Get the path to the saving directory
-    dir_name = [save_path subject_control{sub}];
+    dir_name = [save_path subject{sub}];
     % Make the directory!
     mkdir(dir_name);
 end
-
-
-
 
 %%
 
 pWelch_VS = [];
 count = 1;
 
-for sub = 1:length(subject)
+for sub = 1:length(subject_VS)
     try
         
-        confile = [data_path 'sub-' subject{sub} '/ses-1/meg/sub-' subject{sub}...
+        confile = [data_path 'sub-' subject_VS{sub} '/ses-1/meg/sub-' subject_VS{sub}...
             '_ses-1_task-resting_run-1_meg.con'];
         
         % Get the path to the saving directory
-        dir_name = [save_path subject{sub}];
+        dir_name = [save_path subject_VS{sub}];
         cd(dir_name);
         
         %% Epoching & Filtering
@@ -154,7 +151,7 @@ for sub = 1:length(subject)
         
         count = count+1;
     catch
-        fprintf('Subject %s could not be processed\n', subject{sub});
+        fprintf('Subject %s could not be processed\n', subject_VS{sub});
     end
     
 end

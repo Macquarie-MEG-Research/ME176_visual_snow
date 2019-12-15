@@ -8,27 +8,27 @@ for sub = 1:length(subject)
     disp(subject{sub});
     dir_name = [save_path subject{sub}];
     cd(dir_name);
-    load VE_max.mat
+    load('VE_max.mat');
 
     signal = vertcat(VE.trial{:});
 
     cfg                     = [];
-    cfg.Fs                  = 1000;
+    cfg.Fs                  = 300;
     cfg.phase_freqs         = [7:1:14];
-    cfg.amp_freqs           = [36:2:150];
-    cfg.method              = 'tort';
+    cfg.amp_freqs           = [40:2:100];
+    cfg.method              = 'ozkurt';
     cfg.filt_order          = 4;
     cfg.mask                = [691 1051];
-    %cfg.surr_method         = 'swap_blocks';
+    %cfg.surr_method         = 'swap_trials';
     %cfg.surr_N              = 200;
-    cfg.amp_bandw_method    = 'centre_freq';
-    %cfg.amp_bandw           = 20;
+    cfg.amp_bandw_method    = 'number';
+    cfg.amp_bandw           = 25;
     
-    [MI_raw]        = PACmeg(cfg,signal);
+    [MI_raw]   = PACmeg(cfg,signal);
     cfg.mask                = [151 511];
-    [MI_raw2]        = PACmeg(cfg,signal);
+    [MI_raw2]  = PACmeg(cfg,signal);
     
-    PAC_pre_all(sub,:,:) = MI_raw2;
+    PAC_pre_all(sub,:,:) = MI_raw2;    
     PAC_pst_all(sub,:,:) = MI_raw;
     
     clear MI_raw2 MI_raw signal VE
@@ -42,14 +42,11 @@ cd(group_dir);
 baseline_corrected = (PAC_pst_all - PAC_pre_all);
 
 plot_comod(cfg.phase_freqs,cfg.amp_freqs,squeeze(mean(baseline_corrected)));
-caxis([-8e-4 8e-4]);
-yticks([40:20:150]);
+caxis([-1.5e-4 1.5e-4]);
+yticks([40:20:100]);
 h = colorbar;
 ylabel(h,'PAC vs Baseline');
 print(['alpha_gamma_PAC_' group],'-dpng','-r300');
-
-
-
 
 % 
 % % figure;

@@ -6,7 +6,6 @@ disp('Loading data...');
 load('grating.mat');
 load('lay.mat');
 
-
 %% TFR Calculation
 disp('Calculating Visual Gamma...');
 cfg = [];

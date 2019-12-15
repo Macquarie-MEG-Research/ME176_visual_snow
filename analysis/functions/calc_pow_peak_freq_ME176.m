@@ -1,5 +1,5 @@
 function calc_pow_peak_freq_ME176(subject_VS,subject_control,...
-    save_path,group_dir,group)
+    save_path,group_dir,~)
 
 % Array to hold all data
 perc_change_all_VS = [];
@@ -134,10 +134,7 @@ for sub=1:length(subject_control)
 end
 
 
-%%
-addpath('/Users/rseymoue/Documents/scripts/RainCloudPlots-master/tutorial_matlab');
-addpath('/Users/rseymoue/Documents/scripts/distinguishable_colors');
-
+%% Generate Raincloud Plots
 % Generate Colors
 cols = [0    0.3255    0.5020;   0.8000    0.2745    0.0784];
 

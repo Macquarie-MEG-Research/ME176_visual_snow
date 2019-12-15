@@ -77,7 +77,7 @@ for sub = 1:length(subject_control)
     
 end
 
-%% Plot average gamma frequency with 95% confidence intervals
+%% Plot average alpha frequency with 95% confidence intervals
 
 cd(group_dir);
 cols = [0 0.3255 0.5020; 0.8000 0.2745 0.0784];
@@ -107,10 +107,10 @@ peak_freq_all_VS = [];
 figure;
 for sub=1:length(subject_VS)
     
-    peakss = (max(findpeaks(perc_change_all_VS(sub,7:14).*-1))).*-1;
+    peakss = (max(findpeaks(perc_change_all_VS(sub,8:13).*-1))).*-1;
     
     if isempty(peakss)
-        peakss = min(perc_change_all_VS(sub,7:14));
+        peakss = min(perc_change_all_VS(sub,8:13));
     end
     
     pow_change_all_VS(sub) = perc_change_all_VS(sub,11);
@@ -131,28 +131,24 @@ peak_freq_all_control = [];
 figure;
 for sub=1:length(subject_control)
     
-    peakss = (max(findpeaks(perc_change_all_control(sub,7:14).*-1))).*-1;
+    peakss = (max(findpeaks(perc_change_all_control(sub,8:13).*-1))).*-1;
     
     if isempty(peakss)
-        peakss = min(perc_change_all_control(sub,7:14));
+        peakss = min(perc_change_all_control(sub,8:13));
     end
     
     pow_change_all_control(sub) = perc_change_all_control(sub,11);
     peak_freq = freq(find(perc_change_all_control(sub,:)==peakss));
     peak_freq_all_control(sub) = peak_freq;
     
-    subplot(3,3,sub); plot(freq,perc_change_all_control(sub,:));
+    subplot(4,5,sub); plot(freq,perc_change_all_control(sub,:));
     hold on; plot(peak_freq,peakss,'o','MarkerFaceColor','r');
     
 end
 
 
-%%
-addpath('/Users/rseymoue/Documents/scripts/RainCloudPlots-master/tutorial_matlab');
-addpath('/Users/rseymoue/Documents/scripts/distinguishable_colors');
-
 % Generate Colors
-cols = [0    0.3255    0.5020;   0.8000    0.2745    0.0784];
+cols = [0  0.3255 0.5020; 0.8000 0.2745 0.0784];
 
 % Number of Occurences
 figure;
@@ -173,8 +169,8 @@ legend([h1{1} h2{1}], {'Visual Snow', 'Control'});
 set(h1{2}, 'SizeData', 60);
 set(h2{2}, 'SizeData', 60);
 
-%ylim([-0.04 0.06]);
-xlim([4 18]);
+ylim([-0.15 0.3]);
+xlim([3 19]);
 yticklabels('');
 set(gca,'FontSize',20);
 xlabel('Frequency (Hz)','FontSize',25);
@@ -193,9 +189,10 @@ h2 = raincloud_plot(pow_change_all_control, 'box_on', 1, 'color', cols(2,:), 'al
 set(h1{2}, 'SizeData', 60);
 set(h2{2}, 'SizeData', 60);
 
-%ylim([-4e-3 10e-3]);
+ylim([-0.02 0.03]);
 xlim([-100 80]);
 yticklabels('');
+plot(mean(pow_change_all_control), 'dg')
 set(gca,'FontSize',20);
 xlabel('% Change','FontSize',25);
 title({'Percentage Change'; 'vs Baseline @11Hz'}','FontSize',30);
@@ -205,6 +202,11 @@ print('VS_vs_control_peak_alpha_pow_change','-dpng','-r300');
 end
 
 
+
+figure;
+subplot(1,2,1);boxplot(pow_change_all_control); ylim([-50 50]);
+hold on;
+subplot(1,2,2); boxplot(pow_change_all_VS); ylim([-50 50]);
 
 
 

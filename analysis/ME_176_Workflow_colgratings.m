@@ -15,10 +15,11 @@ script_path = ['/Users/rseymoue/Documents/GitHub/ME176_visual_snow'];
 data_path   = ['/Volumes/Robert T5/BIDS/BIDS-2019-19/ME176/'];
 
 % Path to where the data should be saved
-save_path   = ['/Volumes/Robert T5/ME176_data_preprocessed/'];
+save_path   = ['/Volumes/Robert T5/ME176_data_preprocessed_col_gratings/'];
 
 % Path to where you want to save the group-level results
-group_dir = '/Users/rseymoue/Dropbox/Research/Projects/visual_snow2019/';
+group_dir = ['/Users/rseymoue/Dropbox/Research/Projects/visual_snow2019'...
+    '/colgratings'];
 
 % Path to MQ_MEG_Scripts
 % Download from https://github.com/Macquarie-MEG-Research/MQ_MEG_Scripts
@@ -32,7 +33,7 @@ path_to_MEMES = ['/Users/rseymoue/Documents/GitHub/MEMES/'];
 path_to_MRI_library = '/Volumes/Robert T5/new_HCP_library_for_MEMES/';
     
 % Path to PACmeg
-path_to_PACmeg = '/Users/rseymoue/Documents/GitHub/PACmeg';
+%path_to_PACmeg = '/Users/rseymoue/Documents/GitHub/PACmeg';
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -46,29 +47,29 @@ warning(['Please note that MQ_MEG_Scripts and MEMES are designed for'...
 addpath(genpath(path_to_MQ_MEG_Scripts));
 addpath(genpath(path_to_MEMES));
 addpath(genpath(script_path));
-
-try
-    addpath(genpath(path_to_PACmeg));
-catch
-    disp('You do not have PACmeg');
-end
+% 
+% try
+%     addpath(genpath(path_to_PACmeg));
+% catch
+%     disp('You do not have PACmeg');
+% end
 
 %% 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 3. Load Subject List
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-subject = {'3653','3655','3658','3659'};
-
-subject_VS = {'3120','3317','3321','3323','3324','3326','3350','3351',...
+subject_VS = {'3317','3321','3323','3324','3326','3350','3351',...
     '3354','3376','3492','3567','3568','3569','3592','3593','3595','3605',...
     '3606','3626'};
 
 subject_control = {'3565','3566','3588','3589','3610','3611','3627',...
-    '3630','3633','3655','3658','3659'};
+    '3630','3633'};
 
 % Load subject information from excel file
 subj_info = csv2struct([data_path 'subject_info_ME176.xlsx']);
+
+subject = horzcat(subject_control,subject_VS)
 
 %% 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -95,10 +96,10 @@ for sub = 1:length(subject)
     close all
     
     confile = [data_path 'sub-' subject{sub} '/ses-1/meg/sub-' subject{sub}...
-        '_ses-1_task-alien_run-1_meg.con'];
+        '_ses-1_task-colorgratings_run-1_meg.con'];
     
     mrkfile = [data_path 'sub-' subject{sub}...
-        '/ses-1/meg/sub-' subject{sub} '_ses-1_task-alien_run-1_markers.mrk'];
+        '/ses-1/meg/sub-' subject{sub} '_ses-1_task-colorgratings_run-1_markers.mrk'];
     
     elpfile = dir([data_path 'sub-' subject{sub}...
         '/ses-1/extras/*.elp']);
@@ -121,7 +122,7 @@ for sub = 1:length(subject)
     %%%%%%%%%%%%%%%%%%%%%%
     % Downsample headshape
     %%%%%%%%%%%%%%%%%%%%%%
-    headshape_downsampled = downsample_headshape(hspfile,'yes',2,4);
+    headshape_downsampled = downsample_headshape(hspfile,'yes',2);
     %headshape_downsampled = add_facial_info(headshape_downsampled);
     
     figure; ft_plot_headshape(headshape_downsampled);
@@ -163,25 +164,9 @@ for sub = 1:length(subject)
     load('headshape_downsampled');
     
     MEMES3(dir_name,grad_trans,headshape_downsampled,...
-    path_to_MRI_library,'best',1,8,1)
+    path_to_MRI_library,'best',1,8,4)
     
     close all
-end
-
-%% 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% SPARE: Check which channel the photodetector was recorded on
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-for sub = 1:length(subject)
-   confile = [data_path 'sub-' subject{sub} '/ses-1/meg/sub-' subject{sub}...
-        '_ses-1_task-alien_run-1_meg.con'];
-    
-        % Get the path to the saving directory
-    dir_name = [save_path subject{sub}];
-    
-    check_pd(confile,dir_name,210);
-    
 end
 
 %% 
@@ -197,7 +182,7 @@ for sub = 1:length(subject)
     dir_name = [save_path subject{sub}];
     cd(dir_name);
     
-    preprocessing_ME176(dir_name, confile,subject{sub},subj_info);
+    preprocessing_ME176_colgratings(dir_name, confile,subject{sub},subj_info);
     
     close all force
 end
@@ -263,14 +248,14 @@ atlas = ft_read_atlas(['/Users/rseymoue/Documents/GitHub/fieldtrip/'...
 atlas = ft_convert_units(atlas,'mm');
 
 % Gamma
-for  sub = 1:length(subject)
-    dir_name = [save_path subject{sub}];
+for  sub = 1:length(subject_VS)
+    dir_name = [save_path subject_VS{sub}];
     source_localisation_gamma_ME176(dir_name,mri,template_grid,atlas);
 end
 
 % Alpha
 for sub = 1:length(subject)
-    dir_name = [save_path subject{sub}];
+    dir_name = [save_path subject_control{sub}];
     source_localisation_alpha_ME176(dir_name,mri,template_grid);
 end
 
@@ -294,10 +279,6 @@ clear source_pre_all source_pst_all
 % 12. Calculate V1 % Power Change / Peak Frequency and PLOT between
 % groups
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% Add path to RainCloud Plots
-% Please download from https://github.com/Macquarie-MEG-Research/RainCloudPlots
-addpath('/Users/rseymoue/Documents/scripts/RainCloudPlots-master/tutorial_matlab');
 
 % Gamma
 calc_pow_peak_freq_ME176(subject_VS,subject_control,...
